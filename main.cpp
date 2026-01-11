@@ -59,17 +59,30 @@ int to_minutes(const string& time) {
     return hours * 60 + minutes;
 }
 
-bool should_ring(const string& now, const string& target, bool& tomorrow) {
-    int nmin = to_minutes(now);
-    int tmin = to_minutes(target);
-
-    if(nmin > tmin && !tomorrow) {
-        tomorrow = true;
+int time_before_alarm(const int& now, const int& target) {
+    if(target >= now) {
+        return target - now;
     }
+    return (target + 1440) - now;
+}
 
-    if(!tomorrow) return nmin >= tmin;
+bool should_ring(const int& now, const int& target) {
+    if(time_before_alarm(now, target) <= 0) {
+        return true;
+    }
+    return false;
+}
 
-    return (nmin <= tmin) && (nmin < 12 * 60);
+// Перевод минут во время до звонка
+string min_to_string(const int& total_minutes) {
+    int hours = total_minutes / 60;
+    int minutes = total_minutes % 60;
+
+    stringstream ss;
+    ss << setw(2) << setfill('0') << hours << ":"
+       << setw(2) << setfill('0') << minutes;
+
+    return ss.str();
 }
 
 int main() {
@@ -110,16 +123,20 @@ int main() {
             cout << "Enter message: ";
             getline(cin, message);
 
-            system("cls");
-            cout << endl << "Wait!" << endl;
-
-            bool tomorrow = false;
             while(true) {
                 string now = local_time();
+                system("cls");
+
+                int now_min = to_minutes(now);           // текущее время в мин
+                int targ_min = to_minutes(target_time);   // нужное время в мин
+
+                int time_before = time_before_alarm(now_min, targ_min); // время до звонка в мин
                 
-                if(should_ring(now, target_time, tomorrow)) {
+                cout << "Time before alarm: " << min_to_string(time_before) << endl;
+
+                if(should_ring(now_min, targ_min)) {
                     system("cls");
-                    cout << "TIME: " << target_time << endl;
+                    cout << "TIME: " << now << endl;
                     cout << message << endl;
 
                     int i = 0;
